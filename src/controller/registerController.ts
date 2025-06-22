@@ -1,5 +1,5 @@
 // controllers/authController.ts
-import type { User } from '@prisma/client';
+import type { User } from '@/generated/prisma/client';
 
 interface RegisterData {
     name: string;
