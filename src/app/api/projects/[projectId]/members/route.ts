@@ -1,15 +1,8 @@
-// app/api/projects/[projectId]/members/route.ts
-
 import { NextResponse, NextRequest } from "next/server";
 import prisma from "@/lib/prisma";
 import { verifyAuth } from "@/lib/auth";
 
-interface RouteContext {
-  params: {
-    projectId: string;
-  };
-}
-
+// Fungsi untuk cek apakah user adalah pemilik project
 async function isOwner(userId: string, projectId: string): Promise<boolean> {
   const project = await prisma.project.findFirst({
     where: {
@@ -20,13 +13,17 @@ async function isOwner(userId: string, projectId: string): Promise<boolean> {
   return !!project;
 }
 
-export async function POST(request: NextRequest, { params }: RouteContext) {
+export async function POST(
+  request: NextRequest,
+  { params }: { params: Promise<{ projectId: string }> } // pakai Promise
+) {
+  const { projectId } = await params;
+
   const auth = verifyAuth(request);
   if (!auth) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const { projectId } = params;
   const { userId: currentUserId } = auth;
 
   try {
@@ -44,9 +41,11 @@ export async function POST(request: NextRequest, { params }: RouteContext) {
         { status: 400 }
       );
     }
+
     const userToInvite = await prisma.user.findUnique({
       where: { email: emailToInvite },
     });
+
     if (!userToInvite) {
       return NextResponse.json(
         { error: `User dengan email ${emailToInvite} tidak ditemukan` },
@@ -67,18 +66,19 @@ export async function POST(request: NextRequest, { params }: RouteContext) {
         userId: userToInvite.id,
       },
     });
+
     if (existingMembership) {
       return NextResponse.json(
         { error: "User ini sudah menjadi anggota project." },
         { status: 409 }
-      ); 
+      );
     }
 
     const newMembership = await prisma.membership.create({
       data: {
         projectId: projectId,
         userId: userToInvite.id,
-        role: "MEMBER", 
+        role: "MEMBER",
       },
       include: {
         user: {
