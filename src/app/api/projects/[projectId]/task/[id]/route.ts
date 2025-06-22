@@ -1,15 +1,6 @@
-// app/api/projects/[projectId]/task/[id]/route.ts
-
 import { NextResponse, NextRequest } from "next/server";
 import prisma from "@/lib/prisma";
 import { verifyAuth } from "@/lib/auth";
-
-interface RouteContext {
-  params: {
-    projectId: string;
-    id: string;
-  };
-}
 
 async function authorizeUserForTask(userId: string, taskId: string) {
   const task = await prisma.task.findFirst({
@@ -25,10 +16,13 @@ async function authorizeUserForTask(userId: string, taskId: string) {
   return task;
 }
 
-export async function PATCH(request: NextRequest, { params }: RouteContext) {
-  const { projectId, id: taskId } = params;
-
+export async function PATCH(
+  request: NextRequest,
+  { params }: { params: Promise<{ projectId: string; id: string }> }
+) {
+  const { projectId, id: taskId } = await params;
   const auth = verifyAuth(request);
+
   if (!auth)
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
@@ -97,9 +91,9 @@ export async function PATCH(request: NextRequest, { params }: RouteContext) {
       updatedTask = await prisma.task.update({
         where: { id: taskId },
         data: {
-          title: title,
-          description: description,
-          assigneeId: assigneeId,
+          title,
+          description,
+          assigneeId,
         },
       });
     }
@@ -114,10 +108,13 @@ export async function PATCH(request: NextRequest, { params }: RouteContext) {
   }
 }
 
-export async function DELETE(request: NextRequest, { params }: RouteContext) {
-  const { projectId, id: taskId } = params;
-
+export async function DELETE(
+  request: NextRequest,
+  { params }: { params: Promise<{ projectId: string; id: string }> }
+) {
+  const { projectId, id: taskId } = await params;
   const auth = verifyAuth(request);
+
   if (!auth) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
