@@ -3,19 +3,17 @@ import prisma from "@/lib/prisma";
 import { verifyAuth } from "@/lib/auth";
 import { TaskStatus } from "@/generated/prisma";
 
-interface RouteContext {
-  params: {
-    projectId: string;
-  };
-}
-
-export async function POST(request: NextRequest, { params }: RouteContext) {
+export async function POST(
+  request: NextRequest,
+  { params }: { params: Promise<{ projectId: string }> }
+) {
+  const { projectId } = await params;
   const auth = verifyAuth(request);
+
   if (!auth) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const { projectId } = params;
   const { userId } = auth;
 
   try {
