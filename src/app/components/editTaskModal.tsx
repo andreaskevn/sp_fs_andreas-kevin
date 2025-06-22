@@ -25,7 +25,7 @@ export default function EditTaskModal({ isOpen, onClose, onTaskUpdated, task, pr
         if (task) {
             setTitle(task.title);
             setDescription(task.description || '');
-            setAssigneeId(task.assignee?.id || null); 
+            setAssigneeId(task.assignee?.user.id || null); 
         }
     }, [task]);
 
