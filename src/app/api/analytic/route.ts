@@ -1,23 +1,19 @@
-// app/api/analytics/route.ts
-
 import { NextResponse, NextRequest } from "next/server";
 import prisma from "@/lib/prisma";
 import { verifyAuth } from "@/lib/auth";
-import { TaskStatus } from "@prisma/client";
+import { TaskStatus } from "@/generated/prisma/client";
 
 /**
  * @method  GET
- * @desc    Mendapatkan data analitik task agregat untuk SEMUA project milik user.
+ * @desc   
  */
 export async function GET(request: NextRequest) {
-  // 1. Otentikasi
   const auth = verifyAuth(request);
   if (!auth) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
   try {
-    // 2. Ambil semua project di mana user adalah anggota
     const projects = await prisma.project.findMany({
       where: {
         members: {
@@ -32,13 +28,10 @@ export async function GET(request: NextRequest) {
       },
     });
 
-    // Jika tidak ada proyek, kembalikan array kosong
     if (projects.length === 0) {
       return NextResponse.json([], { status: 200 });
     }
 
-    // 3. Untuk setiap project, hitung jumlah task berdasarkan statusnya
-    // Promise.all digunakan agar semua query berjalan secara paralel untuk efisiensi
     const analyticsData = await Promise.all(
       projects.map(async (project) => {
         const taskCounts = await prisma.task.groupBy({
@@ -51,7 +44,6 @@ export async function GET(request: NextRequest) {
           },
         });
 
-        // 4. Format data agar mudah digunakan di frontend
         const counts = {
           BACKLOG: 0,
           TODO: 0,
