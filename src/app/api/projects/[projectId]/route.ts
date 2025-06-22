@@ -1,36 +1,31 @@
-// app/api/projects/[projectId]/route.ts
-
 import { NextResponse, NextRequest } from "next/server";
 import prisma from "@/lib/prisma";
 import { verifyAuth } from "@/lib/auth";
-
-interface RouteContext {
-  params: {
-    projectId: string;
-  };
-}
 
 async function isOwner(userId: string, projectId: string): Promise<boolean> {
   const project = await prisma.project.findFirst({
     where: {
       id: projectId,
-      ownerId: userId, 
+      ownerId: userId,
     },
   });
-  return !!project; 
+  return !!project;
 }
 
 /**
- * @method  GET
- * @desc   
+ * @method GET
  */
-export async function GET(request: NextRequest, { params }: RouteContext) {
+export async function GET(
+  request: NextRequest,
+  { params }: { params: Promise<{ projectId: string }> }
+) {
+  const { projectId } = await params;
   const auth = verifyAuth(request);
+
   if (!auth) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const { projectId } = params;
   const { userId } = auth;
 
   try {
@@ -61,10 +56,10 @@ export async function GET(request: NextRequest, { params }: RouteContext) {
           include: {
             assignee: {
               select: {
-                id: true, 
+                id: true,
                 user: {
                   select: {
-                    email: true, 
+                    email: true,
                   },
                 },
               },
@@ -92,16 +87,19 @@ export async function GET(request: NextRequest, { params }: RouteContext) {
 }
 
 /**
- * @method  PATCH
- * @desc    
+ * @method PATCH
  */
-export async function PATCH(request: NextRequest, { params }: RouteContext) {
+export async function PATCH(
+  request: NextRequest,
+  { params }: { params: Promise<{ projectId: string }> }
+) {
+  const { projectId } = await params;
   const auth = verifyAuth(request);
+
   if (!auth) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const { projectId } = params;
   const { userId } = auth;
 
   try {
@@ -115,12 +113,14 @@ export async function PATCH(request: NextRequest, { params }: RouteContext) {
         },
       },
     });
+
     if (!project) {
       return NextResponse.json(
         { error: "Project tidak ditemukan atau akses ditolak" },
         { status: 404 }
       );
     }
+
     if (!(await isOwner(userId, projectId))) {
       return NextResponse.json(
         { error: "Hanya pemilik yang bisa mengupdate project" },
@@ -154,16 +154,19 @@ export async function PATCH(request: NextRequest, { params }: RouteContext) {
 }
 
 /**
- * @method  DELETE
- * @desc    
+ * @method DELETE
  */
-export async function DELETE(request: NextRequest, { params }: RouteContext) {
+export async function DELETE(
+  request: NextRequest,
+  { params }: { params: Promise<{ projectId: string }> }
+) {
+  const { projectId } = await params;
   const auth = verifyAuth(request);
+
   if (!auth) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const { projectId } = await params;
   const { userId } = auth;
 
   try {
@@ -177,6 +180,7 @@ export async function DELETE(request: NextRequest, { params }: RouteContext) {
         },
       },
     });
+
     if (!project) {
       return NextResponse.json(
         { error: "Project tidak ditemukan atau akses ditolak" },
