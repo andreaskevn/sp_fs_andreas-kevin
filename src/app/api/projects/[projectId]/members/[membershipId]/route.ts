@@ -11,13 +11,13 @@ interface RouteContext {
   };
 }
 
-export async function DELETE(request: NextRequest, { params }: RouteContext) {
+export async function DELETE(request: NextRequest, context: RouteContext) {
   const auth = verifyAuth(request);
   if (!auth) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const { projectId, membershipId } = params;
+  const { projectId, membershipId } = context.params;
   const { userId: currentUserId } = auth;
 
   try {
